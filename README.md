@@ -62,6 +62,7 @@ tools/                 only needed if you are tracing outlines
   grid.py              draws a percent grid over a photo so you can read coordinates off it
   verify.py            draws the outlines back onto a photo so you can check them
 screenshot.png         the picture at the top of this README
+LICENSE                MIT, for everything except the photos and the quoted report text
 ```
 
 The tools need Python 3 and [Pillow](https://pillow.readthedocs.io) (`python3 -m pip install pillow`). The site itself needs nothing.
@@ -286,4 +287,4 @@ If one of these is yours and you want it credited differently or removed, open a
 
 **Definitions.** Written for this page, in plain language. They are meant to get a newcomer oriented, not to settle arguments between architectural historians.
 
-**Code and tools.** Free to reuse and adapt for your own building.
+**Code, tools, outline data and definitions.** [MIT license](LICENSE): reuse and adapt them freely, keeping the copyright notice. The license does not extend to the photos or the report text above.
