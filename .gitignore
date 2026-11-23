@@ -1,0 +1,9 @@
+.DS_Store
+.claude/
+__pycache__/
+
+# Original downloads. The copies the site uses live in docs/img.
+/*.jpg
+/*.jpeg
+/*.png
+!/screenshot.png

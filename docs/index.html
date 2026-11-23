@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Battery Park Control House: the words, on the building</title>
+<style>
+  :root {
+    --bg: #FEFAF6;
+    --ink: #2b241d;
+    --ink-soft: #7d7165;
+    --rule: #e9dfd3;
+    --brown: #7a4a22;
+    --brown-deep: #54310f;
+    --tan: #eedfcc;
+    --panel: #f7efe5;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.5 Optima, "Optima Nova", Candara, "Segoe UI", sans-serif;
+    display: grid;
+    grid-template-columns: clamp(21rem, 32vw, 29rem) 1fr;
+    overflow: hidden;
+  }
+
+  /* ---------- text ---------- */
+  #doc {
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 2.2rem 3rem;
+    border-right: 1px solid var(--rule);
+  }
+  #doc h1 { font-size: 1.15rem; font-weight: 700; line-height: 1.3; margin: 0 0 .3rem; }
+  #doc .how { color: var(--ink-soft); font-size: .86rem; margin: 0; }
+  #doc h2 {
+    font-size: .82rem; font-weight: 400; letter-spacing: .16em; color: var(--ink-soft);
+    margin: 1.6rem 0 1.1rem; padding-top: 1.2rem; border-top: 1px solid var(--rule);
+  }
+  #doc p.typed { font-size: 1.06rem; line-height: 1.8; margin: 0 0 1.3rem; }
+  .t {
+    background: var(--tan);
+    border-radius: 2px;
+    padding: .1em .16em;
+    margin: 0 -.06em;
+    cursor: pointer;
+    box-shadow: inset 0 -2px 0 var(--brown);
+    transition: background .12s, color .12s;
+    -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  }
+  .t:hover, .t.on { background: var(--brown); color: var(--bg); }
+  .t.pin { background: var(--brown-deep); color: var(--bg); box-shadow: inset 0 -2px 0 var(--brown-deep); }
+  .t.note { background: none; box-shadow: none; border-bottom: 1px dotted var(--brown); border-radius: 0; }
+  .t.note:hover, .t.note.on, .t.note.pin { background: var(--tan); color: var(--ink); }
+  #doc footer { color: var(--ink-soft); font-size: .8rem; border-top: 1px solid var(--rule); padding-top: .9rem; }
+  #doc footer p { margin: 0 0 .6rem; }
+  #doc footer a { color: var(--brown); }
+  kbd { font: inherit; font-size: .76rem; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 .35em; background: #fff; }
+
+  /* ---------- photos ---------- */
+  #photos { height: 100vh; overflow: auto; padding: 1.2rem; display: flex; align-items: center; justify-content: center; min-width: 0; }
+  #grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; align-items: start;
+    width: min(100%, calc((100vh - 3.4rem) * 1.41));
+  }
+  figure.shot { position: relative; margin: 0; overflow: hidden; border-radius: 3px; background: var(--panel); transition: opacity .2s; }
+  figure.shot.absent { opacity: .25; }
+  figure.shot svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  figure.shot figcaption {
+    position: absolute; left: .5rem; bottom: .5rem; pointer-events: none;
+    font-size: .68rem; letter-spacing: .09em; text-transform: uppercase;
+    background: rgba(254, 250, 246, .9); color: var(--brown-deep); padding: .12rem .5rem; border-radius: 3px;
+  }
+  .wash { fill: var(--bg); fill-opacity: .6; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .active .wash { opacity: 1; }
+  .outline { fill: none; stroke: #fff; stroke-width: 2px; vector-effect: non-scaling-stroke; stroke-linejoin: round; pointer-events: none; }
+  .hit { fill: transparent; stroke: none; cursor: pointer; }
+  .hit:hover { fill: rgba(122, 74, 34, .2); }
+  .active .hit:hover { fill: transparent; }
+
+  #card {
+    align-self: stretch; contain: size; overflow: auto;
+    background: var(--panel); border-radius: 3px; border-left: 3px solid var(--brown);
+    padding: 1rem 1.2rem;
+  }
+  #card h3 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--brown-deep); line-height: 1.25; }
+  #card h3 small { display: block; font-weight: 400; color: var(--ink-soft); font-size: .8rem; margin-top: .1rem; }
+  #card p { margin: .5rem 0 0; font-size: .95rem; line-height: 1.45; }
+  #card p.idle { color: var(--ink-soft); margin: 0; }
+
+  #tip {
+    position: fixed; z-index: 5; pointer-events: none;
+    background: var(--brown); color: var(--bg); font-size: .8rem; font-weight: 700;
+    padding: .12rem .5rem; border-radius: 3px; transform: translate(12px, 14px);
+    box-shadow: 0 2px 8px rgba(60, 35, 10, .35);
+  }
+  #tip[hidden] { display: none; }
+
+  /* Narrow window: three photos in a row on top, text underneath. */
+  @media (max-width: 1099px) {
+    body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+    #photos { grid-row: 1; height: auto; overflow: visible; padding: .7rem .7rem .6rem; border-bottom: 1px solid var(--rule); }
+    #grid { grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; gap: .6rem; }
+    #card { grid-column: 1 / -1; contain: none; height: 6.6rem; padding: .6rem .9rem; }
+    #card h3 { font-size: 1.05rem; }
+    #card h3 small { display: inline; margin-left: .5rem; }
+    #card p { font-size: .88rem; margin-top: .25rem; line-height: 1.35; }
+    #doc { grid-row: 2; height: auto; min-height: 0; border-right: 0; padding: 1.1rem 1.3rem 2.5rem; }
+    #doc h2 { margin-top: 1rem; padding-top: .9rem; }
+    figure.shot figcaption { font-size: .6rem; left: .3rem; bottom: .3rem; }
+  }
+</style>
+</head>
+<body>
+
+<section id="doc">
+  <header>
+    <h1>Battery Park Control House, Bowling Green station</h1>
+    <p class="how">Point at a marked word to find it on the building. Click to pin it. You can also point at the photos.</p>
+  </header>
+
+  <h2>DESCRIPTION AND ANALYSIS</h2>
+
+  <p class="typed">Each corner of the <span class="t" data-k="yellowbrick">yellow brick</span> building is marked by limestone <span class="t" data-k="quoins">quoins</span>, and an elaborate <span class="t" data-k="triglyph">triglyph</span> with <span class="t" data-k="guttae">guttae</span> and <span class="t" data-k="cresting">cresting ornament</span>. Smooth limestone <span class="t" data-k="banding">banding</span>, which encircles the building just below the <span class="t" data-k="triglyph">triglyphs</span>, ties it together horizontally. Below this <span class="t" data-k="banding">band</span>, the plain <span class="t" data-k="walls">brick walls</span>, on the east and west sides, are pierced by simple <span class="t" data-k="windows">high windows</span>. The entire building rests on a dark <span class="t" data-k="base">granite base</span>. The <span class="t" data-k="gable">gable ends</span> of the building are decorated with a central <span class="t" data-k="bullseye">bull's-eye</span> with four radiating <span class="t" data-k="keystones">keystones</span>. A <span class="t" data-k="wreath">banded wreath</span> follows the curve of the <span class="t" data-k="bullseye">bull's-eye</span> and is crowned by an arched stone <span class="t" data-k="coping">coping</span> which descends along the sides of the <span class="t" data-k="gable">gables</span>. At the southern end, the <span class="t" data-k="bullseye">bull's-eye</span> is still filled with its original <span class="t" data-k="sunburst">terra-cotta sunburst</span>.</p>
+
+  <p class="typed">The northern front of the <span class="t note" data-k="controlhouse">Control House</span> has a projecting limestone <span class="t" data-k="porch">porch</span> with square <span class="t" data-k="columns">engaged columns</span> supporting a stylized <span class="t" data-k="pediment">pediment</span> on <span class="t" data-k="brackets">brackets</span>. The <span class="t" data-k="pediment">pediment</span> over the doorway is crowned by a decorative motif consisting of a small <span class="t" data-k="rosette">rosette</span> flanked by <span class="t" data-k="volutes">volutes</span>. The southern front has a <span class="t" data-k="extension">brick extension</span> with three <span class="t" data-k="doors">exit doors</span>. The <span class="t" data-k="enframement">enframement</span> of the central exit is identical to that of the northern entrance. The <span class="t" data-k="extension">extension</span> is edged by <span class="t" data-k="plainquoins">plain stone quoins</span> and topped by a <span class="t" data-k="entablature">copper entablature</span> and <span class="t" data-k="roof">roof</span>.</p>
+
+  <footer>
+    <p><kbd>&larr;</kbd> <kbd>&rarr;</kbd> step through the words &nbsp; <kbd>Esc</kbd> clear</p>
+    <p class="credits">Text: New York City Landmarks Preservation Commission, <a href="https://s-media.nyc.gov/agencies/lpc/lp/0829.pdf">designation report LP-0829</a>, 1973.
+    Photos: south front by <a href="https://www.flickr.com/photos/wallyg/331816545/">Wally Gobetz</a> (<a href="https://creativecommons.org/licenses/by-nc-nd/2.0/">CC BY-NC-ND 2.0</a>);
+    north front &copy; <a href="https://www.flickr.com/photos/emilio_guerra/4875139507/">Emilio Guerra</a>; older south front, photographer unknown.
+    <a href="https://github.com/evanapplegate/architectureglossary">Make your own</a>.</p>
+  </footer>
+</section>
+
+<section id="photos">
+  <div id="grid"><div id="card"></div></div>
+</section>
+<div id="tip" hidden></div>
+
+<script>
+const PHOTOS = {
+  "north":    { src: "img/north.jpg",    w: 4752, h: 3168, label: "North front" },
+  "south":    { src: "img/south.jpg",    w: 2223, h: 1479, label: "South front" },
+  "south-bw": { src: "img/south-bw.jpg", w: 2118, h: 1592, label: "South front, older photo" },
+};
+const ORDER = ["south", "north", "south-bw"];
+
+// name: card title. say: pronunciation. def: plain meaning. here: what it is on this building.
+const TERMS = {
+  yellowbrick: { name: "Yellow brick",
+    def: "The main wall material: pale buff-yellow brick laid in long thin courses.",
+    here: "Everything that is not stone trim. The stone parts (corners, band, porch, gable ornament) are limestone." },
+  quoins: { name: "Quoins", say: "say \"coins\"",
+    def: "Blocks of cut stone stacked up the outside corner of a building, usually alternating long and short, so the corner looks stronger and more finished than the wall beside it.",
+    here: "Limestone blocks toothing into the yellow brick at all four corners." },
+  triglyph: { name: "Triglyph", say: "TRY-glif",
+    def: "A block cut with vertical grooves. On a Greek Doric temple, triglyphs repeat along the band under the roof, imitating the ends of wooden beams.",
+    here: "One oversized triglyph sits at the top of each corner, like a capital on top of the stack of quoins." },
+  guttae: { name: "Guttae", say: "GUT-ee, Latin for \"drops\"",
+    def: "The row of small pegs hanging under a triglyph, like drips or the heads of wooden pegs.",
+    here: "Three stubby drops under each corner triglyph, overlapping the stone band." },
+  cresting: { name: "Cresting ornament",
+    def: "Cresting is decoration that runs along or stands on the top edge of a wall or roof.",
+    here: "The stacked stone scrolls standing on each corner, above the triglyph, where the sloping edge of the gable ends." },
+  banding: { name: "Banding",
+    def: "A flat, smooth course of stone running horizontally around a building. Also called a belt course or string course.",
+    here: "The limestone strip right under the triglyphs. On the long side walls it sits directly over the windows." },
+  walls: { name: "Plain brick walls",
+    def: "The long east and west side walls. \"Plain\" because they carry no ornament, unlike the two decorated ends.",
+    here: "Only the west wall shows here, in the color view from the south." },
+  windows: { name: "High windows",
+    def: "Small windows set high in the wall, above head height. They let in light without giving a view in or out.",
+    here: "Tucked directly under the stone band on the side walls." },
+  base: { name: "Granite base",
+    def: "The bottom course a building stands on, also called a plinth. Granite is used because it is harder than limestone or brick and shrugs off splash, salt and kicks.",
+    here: "The slightly projecting course at sidewalk level, under the quoins and brick." },
+  gable: { name: "Gable ends",
+    def: "A gable is the end wall under a pitched roof, rising to a peak.",
+    here: "The north and south end walls rise above the roof as shaped parapets: sloped sides, square shoulders and a round arch in the middle." },
+  bullseye: { name: "Bull's-eye", say: "also oculus, or oeil-de-boeuf",
+    def: "A round window or round panel.",
+    here: "The big stone circle in the middle of each gable. The south one holds a sunburst; the north one now holds a clock." },
+  keystones: { name: "Keystones",
+    def: "A keystone is the wedge-shaped stone at the top of an arch that locks the others in place.",
+    here: "Four of them are set around the circle at 12, 3, 6 and 9 o'clock, pointing out from the center. They are there for looks more than structure." },
+  wreath: { name: "Banded wreath",
+    def: "A carved garland of flowers and fruit, tied at intervals with ribbon-like bands.",
+    here: "It arcs over the top half of the bull's-eye, in two halves split by the top keystone. The straps crossing it are the bands." },
+  coping: { name: "Coping", say: "COPE-ing",
+    def: "The cap course along the top of a wall. Its job is to shed rain so water does not soak down into the masonry.",
+    here: "It arches over the wreath, steps down at the shoulders, then runs down both slopes of the gable." },
+  sunburst: { name: "Terra-cotta sunburst",
+    def: "Terra-cotta is clay pressed in a mold and fired, a cheaper way to make ornament than carving stone. A sunburst is a pattern of rays fanning out from a center.",
+    here: "It fills the south bull's-eye. The north bull's-eye has lost its sunburst and holds a clock." },
+  porch: { name: "Porch",
+    def: "A covered entrance that projects out from the wall of a building.",
+    here: "A shallow limestone one on the north end: two columns, a pediment and the doorway between them." },
+  columns: { name: "Engaged columns",
+    def: "Columns that are attached to the wall behind them instead of standing free. Square ones like these are close cousins of pilasters.",
+    here: "One on each side of the doorway, each with a base, a plain shaft and a molded capital." },
+  pediment: { name: "Pediment",
+    def: "The low triangular gable over a temple front, a door or a window.",
+    here: "\"Stylized\" means it is a free version, not a textbook copy: the ends are flattened into wings and the middle holds the station sign." },
+  brackets: { name: "Brackets", say: "also consoles",
+    def: "Projecting supports that carry something overhanging above them.",
+    here: "The carved blocks sitting on top of the two columns, holding up the ends of the pediment." },
+  rosette: { name: "Rosette",
+    def: "A round, stylized flower used as ornament.",
+    here: "The small disc at the very peak of the pediment." },
+  volutes: { name: "Volutes", say: "vo-LOOTS",
+    def: "Spiral scrolls, like the ones on an Ionic column capital.",
+    here: "A pair of small scrolls leaning against the rosette on either side." },
+  extension: { name: "Brick extension",
+    def: "A lower, flat-topped vestibule added onto the south end of the main building.",
+    here: "Its stone piers and three doorways fill most of the front, so the brick mainly shows on its short side walls." },
+  doors: { name: "Exit doors",
+    def: "Three doorways across the south front: one in the middle under the pediment and one on each side.",
+    here: "In both south photos the middle and right doors are standing open." },
+  enframement: { name: "Enframement",
+    def: "The whole decorative frame around a door or window opening.",
+    here: "The two columns, the brackets and the pediment taken together. The same design frames the north entrance." },
+  plainquoins: { name: "Plain stone quoins",
+    def: "Corner blocks again, but stacked flush in a simple pier instead of toothing in and out like the main corners.",
+    here: "The stone pier at the corner of the extension." },
+  entablature: { name: "Copper entablature", say: "en-TAB-la-chur",
+    def: "An entablature is the horizontal band carried along the top of columns or walls. In classical buildings it has three layers: architrave, frieze and cornice.",
+    here: "The band capping the extension, dark brown metal in the color photo. It is interrupted in the middle by the pediment." },
+  roof: { name: "Roof",
+    def: "The low roof over the south extension.",
+    here: "Standing-seam metal in the color photo. In the older photo it is buried under dirt and leaves." },
+  controlhouse: { name: "Control House", note: true,
+    def: "The early subway's name for a street-level station building. Fares were collected inside, so it \"controlled\" the flow of riders between the street and the platforms." },
+};
+
+const NS = "http://www.w3.org/2000/svg";
+const $ = (id) => document.getElementById(id);
+const tip = $("tip"), card = $("card");
+const el = (name, attrs) => { const e = document.createElementNS(NS, name); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+
+let REG = {};            // photo -> term -> shapes (percent of that photo)
+const stages = [];       // one per photo: { p, P, fig, svg, holes, outlines, view, anim }
+let pinned = null;       // term locked by click
+let hovered = null;      // term under the pointer (text or photo)
+let hoverZoom = false;   // hover came from the text, so zoom to it
+let hoverTimer = 0;
+
+const termOrder = [...new Set([...document.querySelectorAll(".t")].map((s) => s.dataset.k))];
+
+function shapeEl(s, P, cls) {
+  if (s.t === "e") return el("ellipse", { cx: s.c[0] * P.w / 100, cy: s.c[1] * P.h / 100, rx: s.r[0] * P.w / 100, ry: s.r[1] * P.h / 100, class: cls });
+  return el("polygon", { points: s.pts.map((p) => (p[0] * P.w / 100).toFixed(1) + "," + (p[1] * P.h / 100).toFixed(1)).join(" "), class: cls });
+}
+function bbox(s) {
+  if (s.t === "e") return [s.c[0] - s.r[0], s.c[1] - s.r[1], s.c[0] + s.r[0], s.c[1] + s.r[1]];
+  const xs = s.pts.map((p) => p[0]), ys = s.pts.map((p) => p[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+const union = (bs) => [Math.min(...bs.map((b) => b[0])), Math.min(...bs.map((b) => b[1])), Math.max(...bs.map((b) => b[2])), Math.max(...bs.map((b) => b[3]))];
+
+// Where to look for a term on a photo. Small features repeated far apart (a triglyph at each corner): zoom to the first one.
+function targetView(k, st) {
+  const P = st.P, full = { x: 0, y: 0, w: P.w, h: P.h };
+  const shapes = k && REG[st.p][k];
+  if (!shapes) return full;
+  const bs = shapes.map(bbox);
+  let b = union(bs);
+  if (b[2] - b[0] > 45 && bs.every((x) => x[2] - x[0] < 15)) b = bs[0];
+  const bw = (b[2] - b[0]) * P.w / 100, bh = (b[3] - b[1]) * P.h / 100;
+  const w = Math.max(bw * 1.8, bh * 1.8 * P.w / P.h, P.w * 0.1, 560); // never magnify much past the photo's own pixels
+  if (w > P.w * 0.8) return full;
+  const h = w * P.h / P.w;
+  const cx = (b[0] + b[2]) / 2 * P.w / 100, cy = (b[1] + b[3]) / 2 * P.h / 100;
+  return { x: Math.min(Math.max(cx - w / 2, 0), P.w - w), y: Math.min(Math.max(cy - h / 2, 0), P.h - h), w, h };
+}
+
+function setView(st, v) { st.view = v; st.svg.setAttribute("viewBox", `${v.x} ${v.y} ${v.w} ${v.h}`); }
+function flyTo(st, v, ms = 420) {
+  cancelAnimationFrame(st.anim);
+  const from = st.view, t0 = performance.now();
+  if (from.x === v.x && from.y === v.y && from.w === v.w) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return setView(st, v);
+  const step = (now) => {
+    let t = Math.min((now - t0) / ms, 1);
+    t = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    setView(st, { x: from.x + (v.x - from.x) * t, y: from.y + (v.y - from.y) * t, w: from.w + (v.w - from.w) * t, h: from.h + (v.h - from.h) * t });
+    if (t < 1) st.anim = requestAnimationFrame(step);
+  };
+  st.anim = requestAnimationFrame(step);
+}
+
+function buildStage(p) {
+  const P = PHOTOS[p];
+  const fig = document.createElement("figure");
+  fig.className = "shot";
+  fig.style.aspectRatio = `${P.w} / ${P.h}`;
+  fig.innerHTML =
+    `<svg viewBox="0 0 ${P.w} ${P.h}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${P.label}">` +
+    `<defs><mask id="spot-${p}" maskUnits="userSpaceOnUse" x="0" y="0" width="${P.w}" height="${P.h}">` +
+    `<rect width="${P.w}" height="${P.h}" fill="#fff"/><g class="holes" fill="#000"></g></mask></defs>` +
+    `<image href="${P.src}" width="${P.w}" height="${P.h}"/>` +
+    `<rect class="wash" width="${P.w}" height="${P.h}" mask="url(#spot-${p})"/>` +
+    `<g class="outlines"></g><g class="hits"></g></svg>` +
+    `<figcaption>${P.label}</figcaption>`;
+  const svg = fig.querySelector("svg"), hits = fig.querySelector(".hits");
+  const st = { p, P, fig, svg, holes: fig.querySelector(".holes"), outlines: fig.querySelector(".outlines"), view: { x: 0, y: 0, w: P.w, h: P.h }, anim: 0 };
+
+  // Hit areas, biggest first so small features sit on top.
+  const all = [];
+  for (const k in REG[p]) for (const s of REG[p][k]) { const b = bbox(s); all.push({ k, s, a: (b[2] - b[0]) * (b[3] - b[1]) }); }
+  all.sort((a, b) => b.a - a.a);
+  for (const { k, s } of all) { const h = shapeEl(s, P, "hit"); h.dataset.k = k; hits.append(h); }
+
+  hits.addEventListener("mouseover", (e) => {
+    const k = e.target.dataset.k; if (!k) return;
+    clearTimeout(hoverTimer);
+    hovered = k; hoverZoom = false;
+    tip.textContent = TERMS[k].name; tip.hidden = false;
+    render({ zoom: false });
+  });
+  hits.addEventListener("mousemove", (e) => { tip.style.left = e.clientX + "px"; tip.style.top = e.clientY + "px"; });
+  hits.addEventListener("mouseout", () => { tip.hidden = true; hovered = null; render({ zoom: false }); });
+  fig.addEventListener("click", (e) => {
+    const k = e.target.dataset && e.target.dataset.k;
+    tip.hidden = true;
+    pin(k && pinned !== k ? k : null);
+    const first = k && pinned && document.querySelector(`.t[data-k="${k}"]`);
+    if (first) first.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+  $("grid").insertBefore(fig, card);
+  stages.push(st);
+}
+
+// Redraw everything for the current state.
+function render({ zoom = true } = {}) {
+  const k = hovered || pinned;
+  const T = k && TERMS[k];
+  const zk = hovered && hoverZoom ? hovered : pinned;
+  for (const st of stages) {
+    const shapes = (T && !T.note && REG[st.p][k]) || [];
+    st.holes.replaceChildren(...shapes.map((s) => shapeEl(s, st.P, "")));
+    st.outlines.replaceChildren(...shapes.map((s) => shapeEl(s, st.P, "outline")));
+    st.fig.classList.toggle("active", shapes.length > 0);
+    st.fig.classList.toggle("absent", !!T && !T.note && shapes.length === 0);
+    if (zoom) flyTo(st, targetView(zk && !TERMS[zk].note ? zk : null, st));
+  }
+  for (const s of document.querySelectorAll(".t")) {
+    s.classList.toggle("on", s.dataset.k === k);
+    s.classList.toggle("pin", s.dataset.k === pinned);
+  }
+  if (!k) { card.innerHTML = `<p class="idle">Point at a marked word, or at part of the building in any photo.</p>`; return; }
+  card.innerHTML =
+    `<h3>${T.name}${T.say ? `<small>${T.say}</small>` : ""}</h3>` +
+    `<p>${T.def}${T.here ? " " + T.here : ""}</p>`;
+  card.scrollTop = 0;
+}
+
+function pin(k) { pinned = k; hovered = null; hoverZoom = false; render(); }
+
+// ----- text -----
+for (const s of document.querySelectorAll(".t")) {
+  s.tabIndex = 0;
+  s.addEventListener("mouseenter", () => {
+    clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(() => { hovered = s.dataset.k; hoverZoom = true; render(); }, 90);
+  });
+  s.addEventListener("mouseleave", () => {
+    clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(() => { if (!hovered) return; hovered = null; hoverZoom = false; render(); }, 220);
+  });
+  s.addEventListener("click", () => { clearTimeout(hoverTimer); pin(pinned === s.dataset.k ? null : s.dataset.k); });
+  s.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); s.click(); } });
+}
+
+addEventListener("keydown", (e) => {
+  if (e.key === "Escape") return pin(null);
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  e.preventDefault();
+  const i = termOrder.indexOf(pinned), n = termOrder.length;
+  const k = termOrder[i < 0 ? (e.key === "ArrowRight" ? 0 : n - 1) : (i + (e.key === "ArrowRight" ? 1 : -1) + n) % n];
+  pin(k);
+  document.querySelector(`.t[data-k="${k}"]`).scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+
+fetch("regions.json").then((r) => r.json()).then((d) => {
+  REG = d;
+  ORDER.forEach(buildStage);
+  render();
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (TERMS[h]) pin(h);
+});
+</script>
+</body>
+</html>
