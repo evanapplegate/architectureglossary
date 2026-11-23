@@ -1,0 +1,100 @@
+<!doctype html>
+<!--
+  Share card (Open Graph image) for the site. Not published: it is only rendered to docs/og.jpg.
+
+  It draws a crop of one photo with a few features outlined and labelled, using the same
+  docs/regions.json as the real page, so it stays true to the outlines.
+
+  To regenerate, serve the REPO ROOT (not docs/) and screenshot this page at 1200x630:
+
+      python3 -m http.server 8000
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+        --force-device-scale-factor=2 --window-size=1200,630 --virtual-time-budget=8000 \
+        --screenshot=og.png http://localhost:8000/tools/og.html
+      sips -Z 1200 -s format jpeg -s formatOptions 85 og.png --out docs/og.jpg && rm og.png
+
+  For another building, change CARD below: the photo, the crop and which terms to label.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Share card</title>
+<style>
+  :root { --bg: #FEFAF6; --ink: #2b241d; --ink-soft: #7d7165; --brown: #7a4a22; --brown-deep: #54310f; --tan: #eedfcc; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { width: 1200px; height: 630px; overflow: hidden; background: var(--bg); color: var(--ink);
+         font-family: Optima, "Optima Nova", Candara, "Segoe UI", sans-serif; display: flex; }
+  #words { width: 560px; padding: 64px 40px 0 64px; display: flex; flex-direction: column; }
+  .kicker { font-size: 21px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+  h1 { font-size: 84px; line-height: 1.02; margin: 28px 0 0; font-weight: 700; color: var(--brown-deep); }
+  p { font-size: 31px; line-height: 1.5; margin: 34px 0 0; }
+  .t { background: var(--tan); box-shadow: inset 0 -3px 0 var(--brown); padding: .04em .16em; border-radius: 3px; }
+  .t.on { background: var(--brown); color: var(--bg); }
+  .foot { margin-top: auto; padding-bottom: 54px; font-size: 22px; color: var(--ink-soft); }
+  #photo { flex: 1; position: relative; }
+  #photo svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .wash { fill: var(--bg); fill-opacity: .6; }
+  .outline, .leader { fill: none; stroke: #fff; stroke-width: 3px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .label { position: absolute; transform: translateY(-50%); background: var(--brown); color: var(--bg);
+           font-size: 29px; font-weight: 700; padding: 5px 16px 6px; border-radius: 5px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="words">
+  <div class="kicker">Architecture glossary</div>
+  <h1>What is a triglyph?</h1>
+  <p>Point at a word like <span class="t">quoins</span>, <span class="t on">triglyph</span> or <span class="t">guttae</span> and see it on the building.</p>
+  <div class="foot">Battery Park Control House, New York, 1905</div>
+</div>
+<div id="photo"></div>
+
+<script>
+const CARD = {
+  photo: { key: "north", src: "../docs/img/north.jpg", w: 4752, h: 3168 },
+  crop: { x: 12.5, y: 28.3, w: 24 },      // percent of the photo; height follows from the panel's shape
+  labels: [                                // term key, text, and which shape of that term to label (0 = first)
+    { k: "cresting", text: "cresting ornament", i: 0 },
+    { k: "triglyph", text: "triglyph", i: 0 },
+    { k: "guttae", text: "guttae", i: 0 },
+    { k: "quoins", text: "quoins", i: 0, at: 59.6 },   // at: y (percent of photo) to hang the label on, for tall shapes
+  ],
+};
+
+const NS = "http://www.w3.org/2000/svg";
+const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+fetch("../docs/regions.json").then((r) => r.json()).then((REG) => {
+  const P = CARD.photo, box = document.getElementById("photo");
+  const bw = box.clientWidth, bh = box.clientHeight;
+  const vx = CARD.crop.x * P.w / 100, vy = CARD.crop.y * P.h / 100, vw = CARD.crop.w * P.w / 100, vh = vw * bh / bw;
+  const svg = el("svg", { viewBox: `${vx} ${vy} ${vw} ${vh}`, preserveAspectRatio: "xMidYMid slice" });
+  const toPx = (s) => s.pts.map((p) => [p[0] * P.w / 100, p[1] * P.h / 100]);
+  const poly = (s, cls) => el("polygon", { points: toPx(s).map((p) => p.join(",")).join(" "), class: cls });
+
+  const shapes = CARD.labels.map((l) => ({ ...l, s: REG[P.key][l.k][l.i] }));
+  const mask = el("mask", { id: "m", maskUnits: "userSpaceOnUse", x: 0, y: 0, width: P.w, height: P.h });
+  mask.append(el("rect", { width: P.w, height: P.h, fill: "#fff" }), ...shapes.map((l) => { const e = poly(l.s, ""); e.setAttribute("fill", "#000"); return e; }));
+  const defs = el("defs", {}); defs.append(mask);
+  svg.append(defs, el("image", { href: P.src, width: P.w, height: P.h }), el("rect", { class: "wash", width: P.w, height: P.h, mask: "url(#m)" }));
+  for (const l of shapes) svg.append(poly(l.s, "outline"));
+
+  // A label to the right of each shape, joined to it by a short white line.
+  const scale = bw / vw;
+  for (const l of shapes) {
+    const pts = toPx(l.s);
+    const y = l.at ? l.at * P.h / 100 : (Math.min(...pts.map((p) => p[1])) + Math.max(...pts.map((p) => p[1]))) / 2;
+    const near = pts.filter((p) => Math.abs(p[1] - y) < vh * 0.06);
+    const x1 = Math.max(...(near.length ? near : pts).map((p) => p[0]));
+    const x2 = x1 + 46 / scale;
+    svg.append(el("line", { class: "leader", x1, y1: y, x2, y2: y }));
+    const d = document.createElement("div");
+    d.className = "label"; d.textContent = l.text;
+    d.style.left = (x2 - vx) * scale + "px"; d.style.top = (y - vy) * scale + "px";
+    box.append(d);
+  }
+  box.prepend(svg);
+});
+</script>
+</body>
+</html>

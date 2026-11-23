@@ -3,7 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Battery Park Control House: the words, on the building</title>
+<title>Architecture glossary, on the building: Battery Park Control House</title>
+<meta name="description" content="What is a triglyph? Guttae? Quoins? Point at a word in a landmark description and see it outlined on photos of New York's Battery Park Control House.">
+<link rel="canonical" href="https://evanapplegate.github.io/architectureglossary/">
+<meta name="theme-color" content="#FEFAF6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%237a4a22'/%3E%3Cg fill='%23FEFAF6'%3E%3Crect x='7' y='6' width='4' height='14'/%3E%3Crect x='14' y='6' width='4' height='14'/%3E%3Crect x='21' y='6' width='4' height='14'/%3E%3Crect x='6' y='21' width='20' height='2'/%3E%3Cpath d='M8 24h3l1 4H7zM14.5 24h3l1 4h-5zM21 24h3l1 4h-5z'/%3E%3C/g%3E%3C/svg%3E">
+
+<!-- Link previews (Open Graph, used by most apps; the twitter: tags cover X). The image is made by tools/og.html. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Architecture glossary">
+<meta property="og:title" content="What is a triglyph? Architecture terms, shown on the building">
+<meta property="og:description" content="Point at a word like quoins, guttae or coping in a landmark description and see it outlined on photos of New York's Battery Park Control House.">
+<meta property="og:url" content="https://evanapplegate.github.io/architectureglossary/">
+<meta property="og:image" content="https://evanapplegate.github.io/architectureglossary/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A corner of the Battery Park Control House with its cresting ornament, triglyph, guttae and quoins outlined and labelled.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="What is a triglyph? Architecture terms, shown on the building">
+<meta name="twitter:description" content="Point at a word like quoins, guttae or coping in a landmark description and see it outlined on photos of New York's Battery Park Control House.">
+<meta name="twitter:image" content="https://evanapplegate.github.io/architectureglossary/og.jpg">
+<meta name="twitter:image:alt" content="A corner of the Battery Park Control House with its cresting ornament, triglyph, guttae and quoins outlined and labelled.">
 <style>
   :root {
     --bg: #FEFAF6;
@@ -235,6 +255,37 @@ const TERMS = {
   controlhouse: { name: "Control House", note: true,
     def: "The early subway's name for a street-level station building. Fares were collected inside, so it \"controlled\" the flow of riders between the street and the platforms." },
 };
+
+// Structured data for search engines: the page, the building, and every term with its definition.
+// Built from TERMS so there is one copy of the definitions to maintain.
+{
+  const url = document.querySelector('link[rel="canonical"]').href;
+  const ld = document.createElement("script");
+  ld.type = "application/ld+json";
+  ld.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: document.title,
+    description: document.querySelector('meta[name="description"]').content,
+    url,
+    inLanguage: "en",
+    image: document.querySelector('meta[property="og:image"]').content,
+    about: {
+      "@type": "LandmarksOrHistoricalBuildings",
+      name: "Battery Park Control House",
+      address: { "@type": "PostalAddress", streetAddress: "State Street and Battery Place", addressLocality: "New York", addressRegion: "NY", addressCountry: "US" },
+    },
+    mainEntity: {
+      "@type": "DefinedTermSet",
+      name: "Architectural terms on the Battery Park Control House",
+      hasDefinedTerm: Object.entries(TERMS).map(([k, T]) => ({
+        "@type": "DefinedTerm", name: T.name, termCode: k, url: url + "#" + k,
+        description: T.def + (T.here ? " " + T.here : ""),
+      })),
+    },
+  });
+  document.head.append(ld);
+}
 
 const NS = "http://www.w3.org/2000/svg";
 const $ = (id) => document.getElementById(id);
